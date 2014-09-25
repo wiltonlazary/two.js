@@ -17,6 +17,35 @@
 
     group: {
 
+      updateTexture: function(group) {
+
+        // TODO: Need to figure out a way to update the flag.
+
+        if (group._renderer.canvas) {
+          return group._renderer.canvas;
+        }
+
+        var rect = group.getBoundingClientRect(true);
+        var offset = group._renderer.offset = group._renderer.offset || new Two.Vector();
+
+        var texture = group._renderer.canvas = group._renderer.canvas || document.createElement('canvas');
+        var ctx = texture.getContext('2d');
+
+        texture.width = rect.width;
+        texture.height = rect.height;
+
+        ctx.translate(- rect.left, - rect.top);
+        offset.set(rect.left, rect.top);
+
+        for (var i = 0; i < group.children.length; i++) {
+          var child = group.children[i];
+          canvas[child._renderer.type].render.call(child, ctx);
+        }
+
+        return texture;
+
+      },
+
       renderChild: function(child) {
         canvas[child._renderer.type].render.call(child, this.ctx, true, this.clip);
       },
@@ -32,6 +61,7 @@
 
         var defaultMatrix = isDefaultMatrix(matrix);
 
+        var cached = this._cached;
         var mask = this._mask;
         // var clip = this._clip;
 
@@ -51,9 +81,14 @@
           canvas[mask._renderer.type].render.call(mask, ctx, true);
         }
 
-        for (var i = 0; i < this.children.length; i++) {
-          var child = this.children[i];
-          canvas[child._renderer.type].render.call(child, ctx);
+        if (cached) {
+          var texture = canvas.group.updateTexture(this);
+          ctx.drawImage(texture, this._renderer.offset.x, this._renderer.offset.y);
+        } else {
+          for (var i = 0; i < this.children.length; i++) {
+            var child = this.children[i];
+            canvas[child._renderer.type].render.call(child, ctx);
+          }
         }
 
         if (!defaultMatrix) {
@@ -78,15 +113,20 @@
 
     path: {
 
+      updateTexture: function(path) {
+
+      },
+
       render: function(ctx, forced, parentClipped) {
 
         var matrix, stroke, linewidth, fill, opacity, visible, cap, join, miter,
             closed, commands, length, last, next, prev, a, b, c, d, ux, uy, vx, vy,
-            ar, bl, br, cl, x, y, mask, clip, defaultMatrix;
+            ar, bl, br, cl, x, y, mask, clip, defaultMatrix, cached;
 
         // TODO: Add a check here to only invoke _update if need be.
         this._update();
 
+        cached = this._cached;
         matrix = this._matrix.elements;
         stroke = this._stroke;
         linewidth = this._linewidth;
@@ -115,135 +155,144 @@
           ctx.transform(matrix[0], matrix[3], matrix[1], matrix[4], matrix[2], matrix[5]);
         }
 
-       /**
-         * Commented two-way functionality of clips / masks with groups and
-         * polygons. Uncomment when this bug is fixed:
-         * https://code.google.com/p/chromium/issues/detail?id=370951
-         */
+        if (cached) {
 
-        // if (mask) {
-        //   canvas[mask._renderer.type].render.call(mask, ctx, true);
-        // }
+          var texture = canvas.path.updateTexture(this);
+          ctx.drawImage(texture, this._renderer.offset.x, this._renderer.offset.y);
 
-        // Styles
-        if (fill) {
-          ctx.fillStyle = fill;
-        }
-        if (stroke) {
-          ctx.strokeStyle = stroke;
-        }
-        if (linewidth) {
-          ctx.lineWidth = linewidth;
-        }
-        if (miter) {
-          ctx.miterLimit = miter;
-        }
-        if (join) {
-          ctx.lineJoin = join;
-        }
-        if (cap) {
-          ctx.lineCap = cap;
-        }
-        if (_.isNumber(opacity)) {
-          ctx.globalAlpha = opacity;
-        }
+        } else {
 
-        ctx.beginPath();
+         /**
+           * Commented two-way functionality of clips / masks with groups and
+           * polygons. Uncomment when this bug is fixed:
+           * https://code.google.com/p/chromium/issues/detail?id=370951
+           */
 
-        for (var i = 0; i < commands.length; i++) {
+          // if (mask) {
+          //   canvas[mask._renderer.type].render.call(mask, ctx, true);
+          // }
 
-          b = commands[i];
+          // Styles
+          if (fill) {
+            ctx.fillStyle = fill;
+          }
+          if (stroke) {
+            ctx.strokeStyle = stroke;
+          }
+          if (linewidth) {
+            ctx.lineWidth = linewidth;
+          }
+          if (miter) {
+            ctx.miterLimit = miter;
+          }
+          if (join) {
+            ctx.lineJoin = join;
+          }
+          if (cap) {
+            ctx.lineCap = cap;
+          }
+          if (_.isNumber(opacity)) {
+            ctx.globalAlpha = opacity;
+          }
 
-          x = toFixed(b._x);
-          y = toFixed(b._y);
+          ctx.beginPath();
 
-          switch (b._command) {
+          for (var i = 0; i < commands.length; i++) {
 
-            case Two.Commands.close:
-              ctx.closePath();
-              break;
+            b = commands[i];
 
-            case Two.Commands.curve:
+            x = toFixed(b._x);
+            y = toFixed(b._y);
 
-              prev = closed ? mod(i - 1, length) : Math.max(i - 1, 0);
-              next = closed ? mod(i + 1, length) : Math.min(i + 1, last);
+            switch (b._command) {
 
-              a = commands[prev];
-              c = commands[next];
-              ar = (a.controls && a.controls.right) || a;
-              bl = (b.controls && b.controls.left) || b;
+              case Two.Commands.close:
+                ctx.closePath();
+                break;
 
-              if (a._relative) {
-                vx = (ar.x + toFixed(a._x));
-                vy = (ar.y + toFixed(a._y));
-              } else {
-                vx = toFixed(ar.x);
-                vy = toFixed(ar.y);
-              }
+              case Two.Commands.curve:
 
-              if (b._relative) {
-                ux = (bl.x + toFixed(b._x));
-                uy = (bl.y + toFixed(b._y));
-              } else {
-                ux = toFixed(bl.x);
-                uy = toFixed(bl.y);
-              }
+                prev = closed ? mod(i - 1, length) : Math.max(i - 1, 0);
+                next = closed ? mod(i + 1, length) : Math.min(i + 1, last);
 
-              ctx.bezierCurveTo(vx, vy, ux, uy, x, y);
+                a = commands[prev];
+                c = commands[next];
+                ar = (a.controls && a.controls.right) || a;
+                bl = (b.controls && b.controls.left) || b;
 
-              if (i >= last && closed) {
-
-                c = d;
-
-                br = (b.controls && b.controls.right) || b;
-                cl = (c.controls && c.controls.left) || c;
+                if (a._relative) {
+                  vx = (ar.x + toFixed(a._x));
+                  vy = (ar.y + toFixed(a._y));
+                } else {
+                  vx = toFixed(ar.x);
+                  vy = toFixed(ar.y);
+                }
 
                 if (b._relative) {
-                  vx = (br.x + toFixed(b._x));
-                  vy = (br.y + toFixed(b._y));
+                  ux = (bl.x + toFixed(b._x));
+                  uy = (bl.y + toFixed(b._y));
                 } else {
-                  vx = toFixed(br.x);
-                  vy = toFixed(br.y);
+                  ux = toFixed(bl.x);
+                  uy = toFixed(bl.y);
                 }
-
-                if (c._relative) {
-                  ux = (cl.x + toFixed(c._x));
-                  uy = (cl.y + toFixed(c._y));
-                } else {
-                  ux = toFixed(cl.x);
-                  uy = toFixed(cl.y);
-                }
-
-                x = toFixed(c._x);
-                y = toFixed(c._y);
 
                 ctx.bezierCurveTo(vx, vy, ux, uy, x, y);
 
-              }
+                if (i >= last && closed) {
 
-              break;
+                  c = d;
 
-            case Two.Commands.line:
-              ctx.lineTo(x, y);
-              break;
+                  br = (b.controls && b.controls.right) || b;
+                  cl = (c.controls && c.controls.left) || c;
 
-            case Two.Commands.move:
-              d = b;
-              ctx.moveTo(x, y);
-              break;
+                  if (b._relative) {
+                    vx = (br.x + toFixed(b._x));
+                    vy = (br.y + toFixed(b._y));
+                  } else {
+                    vx = toFixed(br.x);
+                    vy = toFixed(br.y);
+                  }
 
+                  if (c._relative) {
+                    ux = (cl.x + toFixed(c._x));
+                    uy = (cl.y + toFixed(c._y));
+                  } else {
+                    ux = toFixed(cl.x);
+                    uy = toFixed(cl.y);
+                  }
+
+                  x = toFixed(c._x);
+                  y = toFixed(c._y);
+
+                  ctx.bezierCurveTo(vx, vy, ux, uy, x, y);
+
+                }
+
+                break;
+
+              case Two.Commands.line:
+                ctx.lineTo(x, y);
+                break;
+
+              case Two.Commands.move:
+                d = b;
+                ctx.moveTo(x, y);
+                break;
+
+            }
           }
-        }
 
-        // Loose ends
+          // Loose ends
 
-        if (closed) {
-          ctx.closePath();
-        }
+          if (closed) {
+            ctx.closePath();
+          }
 
-        if (!clip && !parentClipped) {
-          if (!canvas.isHidden.test(fill)) ctx.fill();
-          if (!canvas.isHidden.test(stroke)) ctx.stroke();
+          if (!clip && !parentClipped) {
+            if (!canvas.isHidden.test(fill)) ctx.fill();
+            if (!canvas.isHidden.test(stroke)) ctx.stroke();
+          }
+
         }
 
         if (!defaultMatrix) {

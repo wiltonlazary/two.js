@@ -49,6 +49,16 @@
         }
       });
 
+      Object.defineProperty(object, 'cached', {
+        get: function() {
+          return this._cached;
+        },
+        set: function(v) {
+          this._flagCached = this._cached != v;
+          this._cached = !!v;
+        }
+      });
+
     }
 
   });
@@ -57,6 +67,7 @@
 
     // Flags
 
+    _flagCached: false,
     _flagMatrix: true,
 
     // _flagMask: false,
@@ -80,6 +91,7 @@
       clone.translation.copy(this.translation);
       clone.rotation = this.rotation;
       clone.scale = this.scale;
+      clone.cached = this.cached;
       _.each(Shape.Properties, function(k) {
         clone[k] = this[k];
       }, this);

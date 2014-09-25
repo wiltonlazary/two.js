@@ -286,7 +286,7 @@
       },
 
       getRatio: function(ctx) {
-        return Two.Utils.devicePixelRatio / getBackingStoreRatio(ctx);
+        return Math.max(Two.Utils.devicePixelRatio / getBackingStoreRatio(ctx), 1);
       },
 
       /**
