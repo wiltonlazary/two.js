@@ -19,9 +19,13 @@
 
       updateTexture: function(group) {
 
-        // TODO: Need to figure out a way to update the flag.
+        var i, child;
 
-        if (group._renderer.canvas) {
+        if (group._renderer.canvas && !group._flagCached) {
+          for (i = 0; i < group.children.length; i++) {
+            child = group.children[i];
+            child._update().flagReset();
+          }
           return group._renderer.canvas;
         }
 
@@ -37,8 +41,8 @@
         ctx.translate(- rect.left, - rect.top);
         offset.set(rect.left, rect.top);
 
-        for (var i = 0; i < group.children.length; i++) {
-          var child = group.children[i];
+        for (i = 0; i < group.children.length; i++) {
+          child = group.children[i];
           canvas[child._renderer.type].render.call(child, ctx);
         }
 
@@ -115,6 +119,30 @@
 
       updateTexture: function(path) {
 
+        var i, child;
+
+        if (path._renderer.canvas && !path._flagCached) {
+          return path._renderer.canvas;
+        }
+
+        var rect = path.getBoundingClientRect(true);
+        var offset = path._renderer.offset = path._renderer.offset || new Two.Vector();
+
+        var texture = path._renderer.canvas = path._renderer.canvas || document.createElement('canvas');
+        var ctx = texture.getContext('2d');
+
+        texture.width = rect.width;
+        texture.height = rect.height;
+
+        ctx.translate(- rect.left, - rect.top);
+        offset.set(rect.left, rect.top);
+
+        path._cached = false;
+        canvas[path._renderer.type].render.call(path, ctx);
+        path._cached = true;
+
+        return texture;
+
       },
 
       render: function(ctx, forced, parentClipped) {
@@ -149,18 +177,18 @@
           return this;
         }
 
-        // Transform
-        if (!defaultMatrix) {
-          ctx.save();
-          ctx.transform(matrix[0], matrix[3], matrix[1], matrix[4], matrix[2], matrix[5]);
-        }
-
         if (cached) {
 
           var texture = canvas.path.updateTexture(this);
           ctx.drawImage(texture, this._renderer.offset.x, this._renderer.offset.y);
 
         } else {
+
+          // Transform
+          if (!defaultMatrix) {
+            ctx.save();
+            ctx.transform(matrix[0], matrix[3], matrix[1], matrix[4], matrix[2], matrix[5]);
+          }
 
          /**
            * Commented two-way functionality of clips / masks with groups and
@@ -293,10 +321,10 @@
             if (!canvas.isHidden.test(stroke)) ctx.stroke();
           }
 
-        }
+          if (!defaultMatrix) {
+            ctx.restore();
+          }
 
-        if (!defaultMatrix) {
-          ctx.restore();
         }
 
         if (clip && !parentClipped) {

@@ -174,7 +174,7 @@
             // This function is called a lot
             // when importing a large SVG
             var i = items.length;
-            while(i--) {
+            while (i--) {
               items[i].bind(Two.Events.change, updateVertices);
             }
 

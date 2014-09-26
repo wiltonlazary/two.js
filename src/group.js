@@ -485,6 +485,14 @@
       return this;
     },
 
+    _update: function(deep) {
+
+      Two.Shape.prototype._update.call(this, deep);
+
+      return this;
+
+    },
+
     flagReset: function() {
 
       if (this._flagAdditions) {

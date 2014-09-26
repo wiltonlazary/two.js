@@ -54,7 +54,9 @@
           return this._cached;
         },
         set: function(v) {
-          this._flagCached = this._cached != v;
+          // Only set this._flagCached if we're going from an un-cached state
+          // to a cached state in order to update the corresponding texture.
+          this._flagCached = !!(v && !this._cached);
           this._cached = !!v;
         }
       });
@@ -66,7 +68,6 @@
   _.extend(Shape.prototype, {
 
     // Flags
-
     _flagCached: false,
     _flagMatrix: true,
 
@@ -77,6 +78,8 @@
 
     _rotation: 0,
     _scale: 1,
+
+    _cached: false,
 
     // _mask: null,
     // _clip: false,
@@ -101,6 +104,7 @@
     /**
      * To be called before render that calculates and collates all information
      * to be as up-to-date as possible for the render. Called once a frame.
+     * TODO: Need to figure out a way to update _flagCached by bubbling.
      */
     _update: function(deep) {
 
@@ -126,7 +130,7 @@
 
     flagReset: function() {
 
-      this._flagMatrix = this._flagScale = false;
+      this._flagCached = this._flagMatrix = this._flagScale = false;
 
       return this;
 
