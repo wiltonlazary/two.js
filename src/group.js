@@ -526,6 +526,12 @@
     var parent = child.parent;
     var index;
 
+    if (parent === newParent) {
+      this.additions.push(child);
+      this._flagAdditions = true;
+      return;
+    }
+
     if (parent && parent.children.ids[child.id]) {
 
       index = _.indexOf(parent.children, child);
