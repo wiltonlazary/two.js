@@ -1,4 +1,4 @@
-<h1 id="masthead" style="display: block; width: 285px; height: 80px; background: url(http://jonobr1.github.io/two.js/images/logo.gif) center center no-repeat; overflow: hidden; text-indent: -9999px;">two.js</h1>
+<h1 id="masthead" style="display: block; width: 285px; height: 80px; background: url(//jonobr1.github.io/two.js/images/logo.gif) center center no-repeat; overflow: hidden; text-indent: -9999px;">two.js</h1>
 
 A two-dimensional drawing api meant for modern browsers. It is renderer agnostic enabling the same api to render in multiple contexts: webgl, canvas2d, and svg.
 
@@ -71,7 +71,27 @@ instead to minify the build with uglify.
 <!-- For the latest nightly changes checkout the `dev` branch [here](../../tree/dev). -->
 
 #### Nightly
++ Added `Two.Texture`, `Two.Sprite`, and `Two.ImageSequence`
++ Removed `Two.Shape` inheritance for `Two.Gradient`s
++ Added `Two.Vector.rotate` method [@ferm10n](https://github.com/ferm10n)
++ Objects clone to parent only if parent exists [@ferm10n](https://github.com/ferm10n)
++ Vendor agnostic `requestAnimationFrame` [@ferm10n](https://github.com/ferm10n)
++ `Two.Utils.Events.listenTo` and `Two.Utils.Events.stopListening` [@ferm10n](https://github.com/ferm10n)
++ `Two.Utils.Events` added to `Two.Path.prototype` for event inheritance [@ferm10n](https://github.com/ferm10n)
++ Enhanced `Two.Shape.scale` to allow both numbers and `Two.Vector` as property value
++ Made `Two.interpret` use latest primitives
++ Added `Two.Circle` primitive
++ `Two.Shape.translation` is now a getter/setter and can be replaced
++ Fixed translation interpretation to strip out `'px'` strings
++ Removed `Two.SineRing` — make `Two.Star.curved = true` and it's the same effect
++ Enhanced `Two.ArcSegment`, `Two.Ellipse`, `Two.Polygon`, `Two.Rectangle`, `Two.RoundedRectangle`, `Two.Star`
++ Fixed `Two.Anchor.relative` interpretation in `svg`, `canvas`, and `webgl` renderers
++ Made Getters / Setters enumerable for iteration compatibility
++ Fixed Two.Utils.Collection.splice method and added additional test
++ Added compatibility with [node.js](http://nodejs.org/), [browserify](http://browserify.org), and [node-canvas](https://github.com/Automattic/node-canvas)
++ Removed third party dependencies
 + Added `remove` method to `Two.Text`
++ Fixed ordering on same parent additions for `Two.Group`
 
 ##### February 9, 2016 [v0.6.0](https://github.com/jonobr1/two.js/releases/tag/v0.6.0)
 + Updated `Two.CanvasRenderer.ctx.imageSmoothingEnabled` to not use deprecated invokation, [issue 178](https://github.com/jonobr1/two.js/issues/178)
@@ -172,3 +192,5 @@ instead to minify the build with uglify.
 
 ##### Jan 29, 2013 [v0.1.0-alpha](https://github.com/jonobr1/two.js/tree/v0.1.0-alpha)
 + Proof of Concept built from Three.js
+
+[![Analytics](https://ga-beacon.appspot.com/UA-40550435-1/two-js/readme?pixel)](https://github.com/igrigorik/ga-beacon)
